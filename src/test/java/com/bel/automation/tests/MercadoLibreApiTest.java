@@ -4,7 +4,7 @@ import io.restassured.RestAssured;
 import org.testng.annotations.Test;
 import static org.hamcrest.Matchers.*;
 
-public class MercadoLibreApiTest.java: {
+public class MercadoLibreApiTest {
 
     @Test
     public void validarDepartamentosMercadoLibre() {
