@@ -9,9 +9,8 @@ import java.io.File;
 import java.nio.file.Files;
 
 public class SauceDemoTest {
-    WebDriver driver; // Nuestro Robot
+    WebDriver driver;
 
-    // Antes de cada prueba: Abrir Chrome y entrar a la página
     @BeforeMethod
     public void prepararRobot() {
         driver = new ChromeDriver();
@@ -19,92 +18,106 @@ public class SauceDemoTest {
         driver.get("https://www.saucedemo.com/");
     }
 
-    // --- PUNTO 3: 2 CASOS DE LOGIN ---
+    // --- FUNCIONALIDAD 1: LOGIN ---
 
-    // --- AUTOMATIZACIÓN CP-03: CONTRASEÑA INCORRECTA ---
-    @Test
-    public void CP03_ContrasenaIncorrecta() {
-        // Pasos: Ingresar usuario correcto y clave cualquiera
-        driver.findElement(By.id("user-name")).sendKeys("standard_user");
-        driver.findElement(By.id("password")).sendKeys("clave_error_123");
-        driver.findElement(By.id("login-button")).click();
-
-        // Resultado Esperado: Verificar el mensaje de error de credenciales
-        String mensajeError = driver.findElement(By.cssSelector("h3[data-test='error']")).getText();
-        Assert.assertTrue(mensajeError.contains("Username and password do not match"),
-                "No apareció el mensaje de error esperado para contraseña incorrecta.");
-    }
-
-    // --- AUTOMATIZACIÓN CP-05: CAMPOS VACÍOS ---
-    @Test
-    public void CP05_CamposVacios() {
-        // Pasos: No escribimos nada (dejamos vacíos) y clic en Login
-        driver.findElement(By.id("login-button")).click();
-
-        // Resultado Esperado: Verificar mensaje de "usuario requerido"
-        String mensajeError = driver.findElement(By.cssSelector("h3[data-test='error']")).getText();
-        Assert.assertTrue(mensajeError.contains("Username is required"),
-                "No apareció el mensaje indicando que el usuario es requerido.");
-    }
     @Test
     public void CP01_LoginExitoso() {
         driver.findElement(By.id("user-name")).sendKeys("standard_user");
         driver.findElement(By.id("password")).sendKeys("secret_sauce");
         driver.findElement(By.id("login-button")).click();
-
-        // Verifica si entró viendo si existe el título de productos
-        boolean estaEnProductos = driver.findElement(By.className("title")).isDisplayed();
-        Assert.assertTrue(estaEnProductos, "El robot no pudo entrar a la tienda.");
+        Assert.assertTrue(driver.findElement(By.className("title")).isDisplayed());
     }
 
     @Test
-    public void CP02_LoginBloqueado() {
+    public void CP02_UsuarioBloqueado() {
         driver.findElement(By.id("user-name")).sendKeys("locked_out_user");
         driver.findElement(By.id("password")).sendKeys("secret_sauce");
         driver.findElement(By.id("login-button")).click();
-
-        // Verifica que salga el mensaje de error de bloqueado
         String error = driver.findElement(By.cssSelector("h3[data-test='error']")).getText();
-        Assert.assertTrue(error.contains("locked out"), "No apareció el error de bloqueo.");
+        Assert.assertTrue(error.contains("locked out"));
     }
 
-    // --- PUNTO 3: 2 CASOS DE CARRITO ---
+    @Test
+    public void CP03_ContrasenaIncorrecta() {
+        driver.findElement(By.id("user-name")).sendKeys("standard_user");
+        driver.findElement(By.id("password")).sendKeys("clave_error");
+        driver.findElement(By.id("login-button")).click();
+        String error = driver.findElement(By.cssSelector("h3[data-test='error']")).getText();
+        Assert.assertTrue(error.contains("Username and password do not match"));
+    }
+
+    @Test
+    public void CP04_UsuarioInexistente() {
+        driver.findElement(By.id("user-name")).sendKeys("usuario_no_existe");
+        driver.findElement(By.id("password")).sendKeys("secret_sauce");
+        driver.findElement(By.id("login-button")).click();
+        String error = driver.findElement(By.cssSelector("h3[data-test='error']")).getText();
+        Assert.assertTrue(error.contains("Username and password do not match"));
+    }
+
+    @Test
+    public void CP05_CamposVacios() {
+        driver.findElement(By.id("login-button")).click();
+        String error = driver.findElement(By.cssSelector("h3[data-test='error']")).getText();
+        // FALLO A PROPÓSITO: Cambiamos "Username is required" por "Cualquier cosa" para la captura
+        Assert.assertTrue(error.contains("Cualquier cosa"), "Generando captura de pantalla...");
+    }
+
+    // --- FUNCIONALIDAD 2: CARRITO ---
 
     @Test
     public void CP06_AgregarProducto() {
-        // Primero, el robot tiene que iniciar sesión
-        driver.findElement(By.id("user-name")).sendKeys("standard_user");
-        driver.findElement(By.id("password")).sendKeys("secret_sauce");
-        driver.findElement(By.id("login-button")).click();
-
-        // Clic en agregar la mochila
+        hacerLogin();
         driver.findElement(By.id("add-to-cart-sauce-labs-backpack")).click();
-
-        // Verifica que el número del carrito sea 1
-        String cantidad = driver.findElement(By.className("shopping_cart_badge")).getText();
-        Assert.assertEquals(cantidad, "1", "El carrito no tiene 1 producto.");
+        Assert.assertEquals(driver.findElement(By.className("shopping_cart_badge")).getText(), "1");
     }
 
     @Test
-    public void CP08_QuitarProducto() {
+    public void CP07_VerificarProductoEnCarrito() {
+        hacerLogin();
+        driver.findElement(By.id("add-to-cart-sauce-labs-backpack")).click();
+        driver.findElement(By.className("shopping_cart_link")).click();
+        String nombre = driver.findElement(By.className("inventory_item_name")).getText();
+        Assert.assertEquals(nombre, "Sauce Labs Backpack");
+    }
+
+    @Test
+    public void CP08_QuitarDesdeCatalogo() {
+        hacerLogin();
+        driver.findElement(By.id("add-to-cart-sauce-labs-backpack")).click();
+        driver.findElement(By.id("remove-sauce-labs-backpack")).click();
+        int size = driver.findElements(By.className("shopping_cart_badge")).size();
+        Assert.assertEquals(size, 0);
+    }
+
+    @Test
+    public void CP09_QuitarDesdeCarrito() {
+        hacerLogin();
+        driver.findElement(By.id("add-to-cart-sauce-labs-backpack")).click();
+        driver.findElement(By.className("shopping_cart_link")).click();
+        driver.findElement(By.id("remove-sauce-labs-backpack")).click();
+        int size = driver.findElements(By.className("inventory_item_name")).size();
+        Assert.assertEquals(size, 0);
+    }
+
+    @Test
+    public void CP10_AgregarMultiples() {
+        hacerLogin();
+        driver.findElement(By.id("add-to-cart-sauce-labs-backpack")).click();
+        driver.findElement(By.id("add-to-cart-sauce-labs-bike-light")).click();
+        driver.findElement(By.id("add-to-cart-sauce-labs-bolt-t-shirt")).click();
+        Assert.assertEquals(driver.findElement(By.className("shopping_cart_badge")).getText(), "3");
+    }
+
+    // Método de ayuda para no repetir el login en cada test
+    private void hacerLogin() {
         driver.findElement(By.id("user-name")).sendKeys("standard_user");
         driver.findElement(By.id("password")).sendKeys("secret_sauce");
         driver.findElement(By.id("login-button")).click();
-
-        // Agrega la mochila y al instante la quita
-        driver.findElement(By.id("add-to-cart-sauce-labs-backpack")).click();
-        driver.findElement(By.id("remove-sauce-labs-backpack")).click();
-
-        // Verifica que ya no exista el circulito rojo de cantidad en el carrito
-        int cantidadCirculitos = driver.findElements(By.className("shopping_cart_badge")).size();
-        Assert.assertEquals(cantidadCirculitos, 0, "El carrito no está vacío.");
     }
-
-    // --- PUNTO 2: SACAR FOTO SI FALLA (Captura de pantalla) ---
 
     @AfterMethod
     public void apagarRobotYSacarFoto(ITestResult resultado) {
-        // Si la prueba salió mal (FAILURE)
         if (ITestResult.FAILURE == resultado.getStatus()) {
             try {
                 TakesScreenshot camara = (TakesScreenshot) driver;
@@ -115,6 +128,6 @@ public class SauceDemoTest {
                 System.out.println("No se pudo sacar la foto.");
             }
         }
-        driver.quit(); // Cierra el navegador
+        driver.quit();
     }
 }
