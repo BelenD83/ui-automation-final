@@ -6,7 +6,10 @@ import org.testng.annotations.Test;
 
 import static org.hamcrest.Matchers.*;
 
-@Listeners(com.bel.automation.utils.Listeners.class)
+@org.testng.annotations.Listeners({
+        io.qameta.allure.testng.AllureTestNg.class,
+        com.bel.automation.utils.Listeners.class
+})
 public class MercadoLibreApiTest {
 
     @Test

@@ -7,7 +7,10 @@ import org.testng.Assert;
 import org.testng.annotations.*;          // @Test, @BeforeMethod, @AfterMethod, etc.
 import org.testng.annotations.Listeners;  // @Listeners
 
-@Listeners(com.bel.automation.utils.Listeners.class)
+@org.testng.annotations.Listeners({
+        io.qameta.allure.testng.AllureTestNg.class,
+        com.bel.automation.utils.Listeners.class
+})
 public class SauceDemoTest {
 
     WebDriver driver;
@@ -92,16 +95,16 @@ public class SauceDemoTest {
         Assert.assertEquals(size, 0);
     }
 
-    @Test
-    public void CP09_QuitarDesdeCarrito() {
-        hacerLogin();
-        driver.findElement(By.id("add-to-cart-sauce-labs-backpack")).click();
-        driver.findElement(By.className("shopping_cart_link")).click();
-        driver.findElement(By.id("remove-sauce-labs-backpack")).click();
+        @Test
+        public void CP09_QuitarDesdeCarrito() {
+            hacerLogin();
+            driver.findElement(By.id("add-to-cart-sauce-labs-backpack")).click();
+            driver.findElement(By.className("shopping_cart_link")).click();
+            driver.findElement(By.id("remove-sauce-labs-backpack")).click();
 
-        int size = driver.findElements(By.className("inventory_item_name")).size();
-        Assert.assertEquals(size, 0);
-    }
+            int size = driver.findElements(By.className("inventory_item_name")).size();
+            Assert.assertEquals(size, 0);
+        }
 
     private void hacerLogin() {
         driver.findElement(By.id("user-name")).sendKeys("standard_user");
