@@ -5,9 +5,12 @@ import org.openqa.selenium.chrome.ChromeDriver;
 import org.testng.Assert;
 import org.testng.ITestResult;
 import org.testng.annotations.*;
+import org.testng.annotations.Listeners; // <--- IMPORTANTE: Para que no se ponga rojo
 import java.io.File;
 import java.nio.file.Files;
 
+// AQUÍ CONECTAMOS CON TU CLASE DE REPORTES
+@Listeners(com.bel.automation.utils.Listeners.class)
 public class SauceDemoTest {
     WebDriver driver;
 
@@ -59,7 +62,7 @@ public class SauceDemoTest {
     public void CP05_CamposVacios() {
         driver.findElement(By.id("login-button")).click();
         String error = driver.findElement(By.cssSelector("h3[data-test='error']")).getText();
-        // FALLO A PROPÓSITO: Cambiamos "Username is required" por "Cualquier cosa" para la captura
+        // FALLO A PROPÓSITO PARA EL REPORTE:
         Assert.assertTrue(error.contains("Cualquier cosa"), "Generando captura de pantalla...");
     }
 
@@ -96,38 +99,4 @@ public class SauceDemoTest {
         driver.findElement(By.id("add-to-cart-sauce-labs-backpack")).click();
         driver.findElement(By.className("shopping_cart_link")).click();
         driver.findElement(By.id("remove-sauce-labs-backpack")).click();
-        int size = driver.findElements(By.className("inventory_item_name")).size();
-        Assert.assertEquals(size, 0);
-    }
-
-    @Test
-    public void CP10_AgregarMultiples() {
-        hacerLogin();
-        driver.findElement(By.id("add-to-cart-sauce-labs-backpack")).click();
-        driver.findElement(By.id("add-to-cart-sauce-labs-bike-light")).click();
-        driver.findElement(By.id("add-to-cart-sauce-labs-bolt-t-shirt")).click();
-        Assert.assertEquals(driver.findElement(By.className("shopping_cart_badge")).getText(), "3");
-    }
-
-    // Método de ayuda para no repetir el login en cada test
-    private void hacerLogin() {
-        driver.findElement(By.id("user-name")).sendKeys("standard_user");
-        driver.findElement(By.id("password")).sendKeys("secret_sauce");
-        driver.findElement(By.id("login-button")).click();
-    }
-
-    @AfterMethod
-    public void apagarRobotYSacarFoto(ITestResult resultado) {
-        if (ITestResult.FAILURE == resultado.getStatus()) {
-            try {
-                TakesScreenshot camara = (TakesScreenshot) driver;
-                File foto = camara.getScreenshotAs(OutputType.FILE);
-                File destino = new File("screenshots/" + resultado.getName() + ".png");
-                Files.copy(foto.toPath(), destino.toPath());
-            } catch (Exception e) {
-                System.out.println("No se pudo sacar la foto.");
-            }
-        }
-        driver.quit();
-    }
-}
+        int size = driver.findElements(By.className("inventory_item_name")).
