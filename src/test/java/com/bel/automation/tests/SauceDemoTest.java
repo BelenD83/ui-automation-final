@@ -5,11 +5,11 @@ import org.openqa.selenium.chrome.ChromeDriver;
 import org.testng.Assert;
 import org.testng.ITestResult;
 import org.testng.annotations.*;
-import org.testng.annotations.Listeners; // <--- IMPORTANTE: Para que no se ponga rojo
+import org.testng.annotations.Listeners;
 import java.io.File;
 import java.nio.file.Files;
 
-// AQUÍ CONECTAMOS CON TU CLASE DE REPORTES
+// Conexión con tu clase de reportes y capturas
 @Listeners(com.bel.automation.utils.Listeners.class)
 public class SauceDemoTest {
     WebDriver driver;
@@ -62,7 +62,7 @@ public class SauceDemoTest {
     public void CP05_CamposVacios() {
         driver.findElement(By.id("login-button")).click();
         String error = driver.findElement(By.cssSelector("h3[data-test='error']")).getText();
-        // FALLO A PROPÓSITO PARA EL REPORTE:
+        // FALLO A PROPÓSITO: Para que el reporte genere la captura de pantalla
         Assert.assertTrue(error.contains("Cualquier cosa"), "Generando captura de pantalla...");
     }
 
@@ -99,6 +99,21 @@ public class SauceDemoTest {
         driver.findElement(By.id("add-to-cart-sauce-labs-backpack")).click();
         driver.findElement(By.className("shopping_cart_link")).click();
         driver.findElement(By.id("remove-sauce-labs-backpack")).click();
-        int size = driver.findElements(By.className("inventory_item_name"))
+        // AQUÍ ESTABA EL ERROR: Faltaba .size() y el punto y coma (;)
+        int size = driver.findElements(By.className("inventory_item_name")).size();
+        Assert.assertEquals(size, 0);
     }
 
+    private void hacerLogin() {
+        driver.findElement(By.id("user-name")).sendKeys("standard_user");
+        driver.findElement(By.id("password")).sendKeys("secret_sauce");
+        driver.findElement(By.id("login-button")).click();
+    }
+
+    @AfterMethod
+    public void apagarRobot() {
+        if (driver != null) {
+            driver.quit();
+        }
+    }
+}
