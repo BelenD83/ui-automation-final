@@ -4,6 +4,9 @@ import io.restassured.RestAssured;
 import org.testng.annotations.Test;
 import static org.hamcrest.Matchers.*;
 
+@Listeners(com.bel.automation.utils.Listeners.class)
+public class MercadoLibreApiTest {
+
 public class MercadoLibreApiTest {
 
     @Test
@@ -20,4 +23,5 @@ public class MercadoLibreApiTest {
 
         System.out.println("API de Mercado Libre validada con éxito.");
     }
+}
 }
