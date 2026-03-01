@@ -1,38 +1,56 @@
 package com.bel.automation.utils;
 
-import com.bel.automation.base.BaseTest;
-import org.apache.commons.io.FileUtils;
-import org.openqa.selenium.OutputType;
-import org.openqa.selenium.TakesScreenshot;
-import org.openqa.selenium.WebDriver;
+import io.qameta.allure.Allure;
+import org.openqa.selenium.*;
+import org.testng.ITestListener;
 import org.testng.ITestResult;
-import org.testng.TestListenerAdapter;
-import java.io.File;
-import java.io.IOException;
-import java.text.SimpleDateFormat;
-import java.util.Date;
 
-public class Listeners extends TestListenerAdapter {
+import java.io.ByteArrayInputStream;
+import java.lang.reflect.Field;
+
+public class Listeners implements ITestListener {
 
     @Override
     public void onTestFailure(ITestResult result) {
-        // Obtenemos el driver desde la clase de test que falló
-        Object currentClass = result.getInstance();
-        WebDriver driver = ((BaseTest) currentClass).getDriver();
+        WebDriver driver = getDriverFromTestInstance(result.getInstance());
 
-        if (driver != null) {
-            // Creamos un nombre único con la fecha y hora para la captura
-            String timestamp = new SimpleDateFormat("yyyy.MM.dd.HH.mm.ss").format(new Date());
-            String fileName = result.getName() + "_" + timestamp + ".png";
+        // Si es un test de API (no hay driver), no pasa nada.
+        if (driver == null) {
+            System.out.println("No hay WebDriver (probablemente test API). No se adjunta screenshot a Allure.");
+            return;
+        }
 
-            File srcFile = ((TakesScreenshot) driver).getScreenshotAs(OutputType.FILE);
+        try {
+            byte[] screenshot = ((TakesScreenshot) driver).getScreenshotAs(OutputType.BYTES);
+
+            Allure.addAttachment(
+                    "Screenshot - " + result.getName(),
+                    new ByteArrayInputStream(screenshot)
+            );
+
+        } catch (Exception e) {
+            System.out.println("No se pudo sacar screenshot: " + e.getMessage());
+        }
+    }
+
+    private WebDriver getDriverFromTestInstance(Object testInstance) {
+        if (testInstance == null) return null;
+
+        // Busca un campo llamado "driver" en la clase del test (y superclases si hubiera)
+        Class<?> clazz = testInstance.getClass();
+        while (clazz != null) {
             try {
-                // Se guardarán en una carpeta llamada 'screenshots' en la raíz del proyecto
-                FileUtils.copyFile(srcFile, new File("./screenshots/" + fileName));
-                System.out.println("❌ Test fallido. Captura guardada como: " + fileName);
-            } catch (IOException e) {
-                e.printStackTrace();
+                Field field = clazz.getDeclaredField("driver");
+                field.setAccessible(true);
+                Object value = field.get(testInstance);
+                if (value instanceof WebDriver) return (WebDriver) value;
+                return null;
+            } catch (NoSuchFieldException ignored) {
+                clazz = clazz.getSuperclass();
+            } catch (Exception e) {
+                return null;
             }
         }
+        return null;
     }
 }
